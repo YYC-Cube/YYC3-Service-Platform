@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState, type ReactNode } from "react"
 import { RefreshCw } from "lucide-react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 
 interface TouchGesturesProps {
   children: ReactNode
@@ -44,7 +44,7 @@ export function TouchGestures({
     const container = containerRef.current
     if (!container) return
 
-    let animationFrame: number
+    let animationFrame = 0
 
     const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0]
@@ -135,7 +135,7 @@ export function TouchGestures({
       container.removeEventListener("touchstart", handleTouchStart)
       container.removeEventListener("touchmove", handleTouchMove)
       container.removeEventListener("touchend", handleTouchEnd)
-      if (animationFrame) {
+      if (animationFrame !== null) {
         cancelAnimationFrame(animationFrame)
       }
     }

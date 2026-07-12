@@ -1,8 +1,8 @@
 "use client"
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { Header } from "../header"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 
 // Mock dependencies
 vi.mock("../avatar-upload", () => ({
@@ -114,7 +114,7 @@ describe("Header Component", () => {
 
   it("应该处理错误状态", async () => {
     // Mock console.error to avoid noise in test output
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => { })
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
     render(<Header />)
 

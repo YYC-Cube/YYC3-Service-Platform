@@ -1,5 +1,5 @@
-import { offlineStorage } from "./offline-storage"
 import { conflictResolver } from "./conflict-resolution"
+import { offlineStorage } from "./offline-storage"
 
 // 增强的后台同步管理器
 class EnhancedBackgroundSyncManager {
@@ -25,11 +25,13 @@ class EnhancedBackgroundSyncManager {
       this.isInitialized = true // 标记为已初始化
 
       // 注册Service Worker同步事件
-      if ("serviceWorker" in navigator && "sync" in window.ServiceWorkerRegistration.prototype) {
+      if ("serviceWorker" in navigator) {
         try {
           const registration = await navigator.serviceWorker.ready
-          await registration.sync.register("enhanced-background-sync")
-          console.log("增强后台同步已注册")
+          if ("sync" in registration) {
+            await (registration as any).sync.register("enhanced-background-sync")
+            console.log("增强后台同步已注册")
+          }
         } catch (error) {
           console.error("增强后台同步注册失败:", error)
         }
@@ -193,7 +195,7 @@ class EnhancedBackgroundSyncManager {
 
     try {
       // 对于更新操作，先获取服务器最新数据
-      if (method === "PUT" || method === "PATCH") {
+      if (method === "PUT" || method === "PATCH" as any) {
         const getResponse = await fetch(endpoint, {
           method: "GET",
           headers: { "Content-Type": "application/json", ...headers },

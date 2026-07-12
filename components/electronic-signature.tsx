@@ -1,9 +1,13 @@
 "use client"
 
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -12,27 +16,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
+  PenTool,
+  Save,
+  RotateCcw,
+  Download,
+  Upload,
   CheckCircle,
+  Eye,
+  Smartphone,
+  Tablet,
+  Monitor,
+  Shield,
   Clock,
+  User,
   FileText,
   Fingerprint,
   Lock,
-  PenTool,
-  RotateCcw,
-  Save,
-  Shield,
-  Smartphone,
-  Upload,
-  User,
-  Zap
+  Zap,
 } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
 
 // 签名类型枚举
 const SignatureTypes = {

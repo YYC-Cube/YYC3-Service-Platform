@@ -104,7 +104,7 @@ export function EnhancedTouchGestures({
     const container = containerRef.current
     if (!container) return
 
-    let animationFrame: number
+    let animationFrame = 0
 
     const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0]

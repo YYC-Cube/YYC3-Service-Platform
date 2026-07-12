@@ -12,11 +12,13 @@ class BackgroundSyncManager {
     await offlineStorage.init()
 
     // 注册Service Worker同步事件
-    if ("serviceWorker" in navigator && "sync" in window.ServiceWorkerRegistration.prototype) {
+    if ("serviceWorker" in navigator) {
       try {
         const registration = await navigator.serviceWorker.ready
-        await registration.sync.register("background-sync")
-        console.log("后台同步已注册")
+        if ("sync" in registration) {
+          await (registration as any).sync.register("background-sync")
+          console.log("后台同步已注册")
+        }
       } catch (error) {
         console.error("后台同步注册失败:", error)
       }

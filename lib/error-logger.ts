@@ -53,14 +53,15 @@ class ErrorLogger {
     // 捕获资源加载错误
     window.addEventListener(
       "error",
-      (event) => {
+      (event: Event) => {
         if (event.target !== window) {
+          const target = event.target as any
           this.warning(
             "Resource Load Error",
-            `Failed to load: ${(event.target as any)?.src || (event.target as any)?.href}`,
+            `Failed to load: ${target?.src || target?.href}`,
             {
-              element: event.target?.tagName,
-              source: (event.target as any)?.src || (event.target as any)?.href,
+              element: target?.tagName,
+              source: target?.src || target?.href,
             },
           )
         }
@@ -133,9 +134,9 @@ class ErrorLogger {
         },
         memory: (performance as any).memory
           ? {
-              used: (performance as any).memory.usedJSHeapSize,
-              total: (performance as any).memory.totalJSHeapSize,
-            }
+            used: (performance as any).memory.usedJSHeapSize,
+            total: (performance as any).memory.totalJSHeapSize,
+          }
           : undefined,
         connection: this.getConnectionInfo(),
       },
@@ -169,11 +170,11 @@ class ErrorLogger {
       (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection
     return connection
       ? {
-          effectiveType: connection.effectiveType,
-          downlink: connection.downlink,
-          rtt: connection.rtt,
-          saveData: connection.saveData,
-        }
+        effectiveType: connection.effectiveType,
+        downlink: connection.downlink,
+        rtt: connection.rtt,
+        saveData: connection.saveData,
+      }
       : null
   }
 
@@ -261,8 +262,8 @@ class ErrorLogger {
       if (filter.category) {
         filteredLogs = filteredLogs.filter((log) => log.category === filter.category)
       }
-      if (filter.since) {
-        filteredLogs = filteredLogs.filter((log) => log.timestamp >= filter.since)
+      if (filter.since !== undefined) {
+        filteredLogs = filteredLogs.filter((log) => log.timestamp >= filter.since!)
       }
       if (filter.limit) {
         filteredLogs = filteredLogs.slice(0, filter.limit)

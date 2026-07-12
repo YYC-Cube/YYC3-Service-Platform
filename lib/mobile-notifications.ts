@@ -102,7 +102,7 @@ export class MobileNotificationService {
 
     // 添加操作按钮（如果支持）
     if (options.actions && "actions" in Notification.prototype) {
-      notificationOptions.actions = options.actions
+      ; (notificationOptions as any).actions = options.actions
     }
 
     try {
@@ -151,7 +151,7 @@ export class MobileNotificationService {
         // 创建新的推送订阅
         subscription = await this.serviceWorkerRegistration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: this.urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ""),
+          applicationServerKey: this.urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "") as any,
         })
       }
 

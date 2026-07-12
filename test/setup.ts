@@ -31,19 +31,22 @@ Object.defineProperty(window, "matchMedia", {
 })
 
 // Mock localStorage
-const localStorageMock = {
+const localStorageMock: Storage = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
   clear: vi.fn(),
+  length: 0,
+  key: vi.fn(),
 }
 global.localStorage = localStorageMock
 
 // Mock IndexedDB
-const indexedDBMock = {
+const indexedDBMock: IDBFactory = {
   open: vi.fn(),
   deleteDatabase: vi.fn(),
   cmp: vi.fn(),
+  databases: vi.fn().mockResolvedValue([]),
 }
 global.indexedDB = indexedDBMock
 

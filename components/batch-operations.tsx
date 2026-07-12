@@ -1,18 +1,5 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import { EnhancedButton } from "@/components/ui/enhanced-button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,8 +10,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { EnhancedButton } from "@/components/ui/enhanced-button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CheckSquare, Trash2, Download, Tag, Users, Calendar, Mail, Archive, Star, MoreHorizontal } from "lucide-react"
+import { Archive, Calendar, CheckSquare, Download, Mail, MoreHorizontal, Star, Tag, Trash2, Users } from "lucide-react"
+import { useState } from "react"
 
 interface BatchOperationsProps {
   selectedItems: string[]
@@ -111,7 +111,7 @@ export function BatchOperations({
                   <Checkbox
                     checked={isAllSelected}
                     ref={(el) => {
-                      if (el) el.indeterminate = isPartialSelected
+                      if (el) (el as unknown as HTMLInputElement).indeterminate = isPartialSelected
                     }}
                     onCheckedChange={(checked) => onSelectAll(!!checked)}
                   />
@@ -143,9 +143,8 @@ export function BatchOperations({
                         <DropdownMenuItem
                           key={action.id}
                           onClick={() => handleBatchAction(action.id)}
-                          className={`cursor-pointer ${
-                            action.variant === "destructive" ? "text-red-600 focus:text-red-600 focus:bg-red-50" : ""
-                          }`}
+                          className={`cursor-pointer ${action.variant === "destructive" ? "text-red-600 focus:text-red-600 focus:bg-red-50" : ""
+                            }`}
                         >
                           <Icon className="mr-2 h-4 w-4" />
                           <span>{action.label}</span>

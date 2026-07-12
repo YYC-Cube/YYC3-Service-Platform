@@ -1,24 +1,24 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  CheckCircle,
+  Activity,
   AlertTriangle,
-  XCircle,
-  TrendingUp,
-  Shield,
-  Zap,
-  Users,
-  Settings,
   BarChart3,
-  FileText,
+  CheckCircle,
   Code,
   Database,
+  FileText,
+  Settings,
+  Shield,
   Smartphone,
-  Activity,
+  TrendingUp,
+  Users,
+  XCircle,
+  Zap,
 } from "lucide-react"
 
 export function SystemAnalysisReport() {
@@ -214,11 +214,11 @@ export function SystemAnalysisReport() {
         architectureAnalysis.backend.score +
         architectureAnalysis.database.score +
         architectureAnalysis.security.score) /
-        4 +
+      4 +
       (uxAnalysis.design.score + uxAnalysis.usability.score + uxAnalysis.performance.score) / 3 +
       (stabilityAnalysis.errorHandling.score + stabilityAnalysis.monitoring.score + stabilityAnalysis.testing.score) /
-        3) /
-      4,
+      3) /
+    4,
   )
 
   return (
@@ -456,11 +456,11 @@ export function SystemAnalysisReport() {
                     </div>
                   )}
 
-                  {analysis.gaps && (
+                  {'gaps' in analysis && analysis.gaps && (
                     <div>
                       <h4 className="text-sm font-medium text-red-700 mb-2">缺失项</h4>
                       <ul className="text-xs text-gray-600 space-y-1">
-                        {analysis.gaps.map((gap, idx) => (
+                        {analysis.gaps!.map((gap: string, idx: number) => (
                           <li key={idx} className="flex items-center space-x-1">
                             <XCircle className="w-3 h-3 text-red-500" />
                             <span>{gap}</span>

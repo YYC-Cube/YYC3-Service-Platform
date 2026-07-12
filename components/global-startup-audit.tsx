@@ -1,29 +1,29 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Clock,
-  Zap,
-  Shield,
-  Users,
-  Settings,
-  FileText,
-  TrendingUp,
   Activity,
-  RefreshCw,
-  Download,
-  Play,
+  AlertTriangle,
   BarChart3,
+  CheckCircle,
+  Clock,
+  Download,
+  FileText,
+  Play,
+  RefreshCw,
+  Settings,
+  Shield,
+  TrendingUp,
+  Users,
+  XCircle,
+  Zap,
 } from "lucide-react"
+import { useState } from "react"
 
 interface AuditItem {
   id: string
@@ -42,7 +42,7 @@ interface AuditCategory {
   icon: any
   items: AuditItem[]
   score: number
-  status: "pass" | "fail" | "warning"
+  status: "pass" | "fail" | "warning" | "pending"
 }
 
 export function GlobalStartupAudit() {
@@ -58,7 +58,7 @@ export function GlobalStartupAudit() {
       name: "系统架构",
       icon: Settings,
       score: 0,
-      status: "pending",
+      status: "pending" as const,
       items: [
         {
           id: "arch-001",
@@ -326,9 +326,9 @@ export function GlobalStartupAudit() {
           prev.map((cat) =>
             cat.name === category.name
               ? {
-                  ...cat,
-                  items: cat.items.map((i) => (i.id === item.id ? result : i)),
-                }
+                ...cat,
+                items: cat.items.map((i) => (i.id === item.id ? result : i)),
+              }
               : cat,
           ),
         )
@@ -347,7 +347,7 @@ export function GlobalStartupAudit() {
       return {
         ...category,
         score: Math.round(avgScore),
-        status: hasFailures ? "fail" : hasWarnings ? "warning" : "pass",
+        status: (hasFailures ? "fail" : hasWarnings ? "warning" : "pass") as "pass" | "fail" | "warning" | "pending",
       }
     })
 
