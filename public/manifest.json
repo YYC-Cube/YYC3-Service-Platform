@@ -1,35 +1,48 @@
 {
   "name": "言语云企业管理系统",
   "short_name": "言语云",
+  "description": "智能化、一体化的现代企业管理平台 · AI 驱动的全链路企业数字化解决方案",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#1a73e8",
+  "background_color": "#ffffff",
+  "categories": ["business", "productivity", "ai"],
+  "lang": "zh-CN",
   "icons": [
     {
-      "src": "/android-chrome-192x192.png",
+      "src": "/yyc3-icons/Web App/android-chrome-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/android-chrome-512x512.png",
+      "src": "/yyc3-icons/Web App/android-chrome-512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/apple-touch-icon.png",
+      "src": "/yyc3-icons/Web App/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png"
     },
     {
-      "src": "/favicon-32x32.png",
+      "src": "/yyc3-icons/Web App/favicon-32.png",
       "sizes": "32x32",
       "type": "image/png"
     },
     {
-      "src": "/favicon-16x16.png",
+      "src": "/yyc3-icons/Web App/favicon-16.png",
       "sizes": "16x16",
       "type": "image/png"
+    },
+    {
+      "src": "/yyc3-icons/macOS/512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff"
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
 }

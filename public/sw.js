@@ -1,52 +1,46 @@
-const CACHE_NAME = "zuoyou-ems-v1.0.0"
+const CACHE_NAME = "yyc3-ems-v2.0.0"
 const OFFLINE_URL = "/offline"
 
 // 需要缓存的静态资源
-const STATIC_CACHE_URLS = ["/", "/offline", "/images/zuoyou-logo.png", "/manifest.json"]
+const STATIC_CACHE_URLS = [
+  "/",
+  "/offline",
+  "/Family-001.png",
+  "/icon.svg",
+  "/manifest.json",
+]
 
-// 需要缓存的API路径模式
-const API_CACHE_PATTERNS = [/^\/api\/dashboard/, /^\/api\/customers/, /^\/api\/tasks/, /^\/api\/approval/]
-
-// 安装事件 - 预缓存静态资源
+// 安装 Service Worker
 self.addEventListener("install", (event) => {
   console.log("Service Worker 安装中...")
-
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => {
-        console.log("预缓存静态资源")
-        return cache.addAll(STATIC_CACHE_URLS)
-      })
-      .then(() => {
-        // 强制激活新的 Service Worker
-        return self.skipWaiting()
-      }),
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log("缓存静态资源...")
+      return cache.addAll(STATIC_CACHE_URLS)
+    }),
   )
+  // 立即激活
+  self.skipWaiting()
 })
 
-// 激活事件 - 清理旧缓存
+// 激活 Service Worker
 self.addEventListener("activate", (event) => {
   console.log("Service Worker 激活中...")
-
+  // 清理旧缓存
   event.waitUntil(
-    caches
-      .keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
-              console.log("删除旧缓存:", cacheName)
-              return caches.delete(cacheName)
-            }
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name.startsWith("yyc3-ems-") && name !== CACHE_NAME)
+          .map((name) => {
+            console.log("删除旧缓存:", name)
+            return caches.delete(name)
           }),
-        )
-      })
-      .then(() => {
-        // 立即控制所有客户端
-        return self.clients.claim()
-      }),
+      )
+    }),
   )
+  // 立即控制所有客户端
+  self.clients.claim()
 })
 
 // 拦截网络请求
@@ -64,7 +58,6 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // 缓存成功的响应
           const responseClone = response.clone()
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(request, responseClone)
@@ -72,7 +65,6 @@ self.addEventListener("fetch", (event) => {
           return response
         })
         .catch(() => {
-          // 网络失败时从缓存获取
           return caches.match(request).then((cachedResponse) => {
             return cachedResponse || caches.match(OFFLINE_URL)
           })
@@ -86,7 +78,6 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // 只缓存成功的 GET 请求
           if (request.method === "GET" && response.ok) {
             const responseClone = response.clone()
             caches.open(CACHE_NAME).then((cache) => {
@@ -96,13 +87,11 @@ self.addEventListener("fetch", (event) => {
           return response
         })
         .catch(() => {
-          // 网络失败时从缓存获取
           if (request.method === "GET") {
             return caches.match(request).then((cachedResponse) => {
               if (cachedResponse) {
                 return cachedResponse
               }
-              // 返回离线数据
               return new Response(
                 JSON.stringify({
                   error: "网络连接失败",
@@ -122,7 +111,12 @@ self.addEventListener("fetch", (event) => {
   }
 
   // 静态资源 - 缓存优先策略
-  if (request.destination === "image" || request.destination === "script" || request.destination === "style") {
+  if (
+    request.destination === "image" ||
+    request.destination === "script" ||
+    request.destination === "style" ||
+    request.destination === "font"
+  ) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
         if (cachedResponse) {
@@ -146,10 +140,7 @@ self.addEventListener("sync", (event) => {
   console.log("后台同步事件:", event.tag)
 
   if (event.tag === "background-sync") {
-    event.waitUntil(
-      // 执行后台同步任务
-      syncData(),
-    )
+    event.waitUntil(syncData())
   }
 })
 
@@ -159,8 +150,8 @@ self.addEventListener("push", (event) => {
 
   const options = {
     body: event.data ? event.data.text() : "您有新的消息",
-    icon: "/images/zuoyou-logo.png",
-    badge: "/images/zuoyou-logo.png",
+    icon: "/yyc3-icons/Web App/android-chrome-192.png",
+    badge: "/yyc3-icons/Web App/android-chrome-192.png",
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
@@ -170,17 +161,17 @@ self.addEventListener("push", (event) => {
       {
         action: "explore",
         title: "查看详情",
-        icon: "/images/zuoyou-logo.png",
       },
       {
         action: "close",
         title: "关闭",
-        icon: "/images/zuoyou-logo.png",
       },
     ],
   }
 
-  event.waitUntil(self.registration.showNotification("ZUOYOU 企业管理系统", options))
+  event.waitUntil(
+    self.registration.showNotification("言语云企业管理系统", options),
+  )
 })
 
 // 通知点击事件
@@ -197,10 +188,7 @@ self.addEventListener("notificationclick", (event) => {
 // 同步数据函数
 async function syncData() {
   try {
-    // 这里可以实现具体的数据同步逻辑
     console.log("执行后台数据同步...")
-
-    // 示例：同步待处理的离线操作
     const offlineActions = await getOfflineActions()
 
     for (const action of offlineActions) {
@@ -210,8 +198,6 @@ async function syncData() {
           headers: action.headers,
           body: action.body,
         })
-
-        // 同步成功，删除离线操作记录
         await removeOfflineAction(action.id)
       } catch (error) {
         console.error("同步操作失败:", error)
@@ -224,14 +210,12 @@ async function syncData() {
   }
 }
 
-// 获取离线操作记录（示例）
+// 获取离线操作记录
 async function getOfflineActions() {
-  // 这里应该从 IndexedDB 或其他存储中获取离线操作
   return []
 }
 
-// 删除离线操作记录（示例）
+// 删除离线操作记录
 async function removeOfflineAction(actionId) {
-  // 这里应该从存储中删除已同步的操作
   console.log("删除离线操作:", actionId)
 }

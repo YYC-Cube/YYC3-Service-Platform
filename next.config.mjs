@@ -1,57 +1,36 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // 性能优化 - Next.js 16 内置优化
   experimental: {
-    webpackBuildWorker: true,
-    optimizeCss: true,
+    optimizeServerReact: true,
     scrollRestoration: true,
   },
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // 启用 Bundle Analyzer
-    if (process.env.ANALYZE === 'true') {
-      const BundleAnalyzerPlugin = require('@next/bundle-analyzer')({
-        enabled: true,
+
+  // Web Workers 支持
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.module.rules.push({
+        test: /\.worker\.(js|ts)$/,
+        use: {
+          loader: 'worker-loader',
+          options: {
+            name: 'static/[hash].worker.js',
+            publicPath: '/_next/',
+          },
+        },
       })
-      config.plugins.push(new BundleAnalyzerPlugin())
     }
-
-    // Web Workers 支持
-    config.module.rules.push({
-      test: /\.worker\.(js|ts)$/,
-      use: {
-        loader: 'worker-loader',
-        options: {
-          name: 'static/[hash].worker.js',
-          publicPath: '/_next/',
-        },
-      },
-    })
-
-    // 性能优化
-    if (!dev && !isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-          common: {
-            name: 'common',
-            minChunks: 2,
-            chunks: 'all',
-            enforce: true,
-          },
-        },
-      }
-    }
-
     return config
   },
-  
+
   // 图片优化
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'localhost',
+      },
+    ],
     formats: ['image/webp', 'image/avif'],
     unoptimized: true,
   },
