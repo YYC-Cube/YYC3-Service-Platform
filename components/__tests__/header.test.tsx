@@ -1,8 +1,8 @@
 "use client"
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { Header } from "../header"
-import { describe, it, expect, vi, beforeEach } from "vitest"
 
 // Mock dependencies
 vi.mock("../avatar-upload", () => ({
@@ -54,7 +54,7 @@ describe("Header Component", () => {
 
     await waitFor(() => {
       // 验证搜索功能被触发
-      expect(searchInput.value).toBe("客户管理")
+      expect((searchInput as HTMLInputElement).value).toBe("客户管理")
     })
   })
 
@@ -114,7 +114,7 @@ describe("Header Component", () => {
 
   it("应该处理错误状态", async () => {
     // Mock console.error to avoid noise in test output
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => { })
 
     render(<Header />)
 
@@ -126,7 +126,7 @@ describe("Header Component", () => {
 
     await waitFor(() => {
       // 验证输入被正确处理（清理或转义）
-      expect(searchInput.value).not.toContain("<script>")
+      expect((searchInput as HTMLInputElement).value).not.toContain("<script>")
     })
 
     consoleSpy.mockRestore()

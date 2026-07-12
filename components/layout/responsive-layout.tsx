@@ -1,11 +1,11 @@
 "use client"
 
-import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
-import { useResponsiveLayout, type LayoutConfig } from "@/lib/responsive-layout"
-import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
+import { Sidebar } from "@/components/sidebar"
+import { useResponsiveLayout, type LayoutConfig } from "@/lib/responsive-layout"
 import { cn } from "@/lib/utils"
+import type React from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 
 // 布局上下文
 interface LayoutContextType {
@@ -78,6 +78,7 @@ export function ResponsiveLayout({
 }: ResponsiveLayoutProps) {
   const { sidebarCollapsed, sidebarOpen, setSidebarOpen, layoutConfig } = useLayoutContext()
   const { isMobile, isTablet, getContentStyles } = useResponsiveLayout()
+  const [activeModule, setActiveModule] = useState("dashboard")
 
   // 计算主内容区域的边距
   const getMainContentMargin = () => {
@@ -92,7 +93,7 @@ export function ResponsiveLayout({
       {/* 侧边栏 */}
       {showSidebar && (
         <>
-          <Sidebar />
+          <Sidebar activeModule={activeModule} setActiveModule={setActiveModule} />
 
           {/* 移动端遮罩 */}
           {isMobile && sidebarOpen && (
@@ -109,13 +110,7 @@ export function ResponsiveLayout({
         }}
       >
         {/* 头部 */}
-        {showHeader && (
-          <Header
-            height={layoutConfig.header.height}
-            sticky={layoutConfig.header.sticky}
-            showOnMobile={layoutConfig.header.showOnMobile}
-          />
-        )}
+        {showHeader && <Header />}
 
         {/* 页面内容 */}
         <main

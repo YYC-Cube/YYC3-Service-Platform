@@ -1,65 +1,92 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from "recharts"
 import {
   Activity,
-  Zap,
-  TrendingUp,
   AlertTriangle,
+  BarChart3,
+  Bell,
   CheckCircle,
   Clock,
   Database,
+  Pause,
+  Play,
+  RefreshCw,
+  Settings,
+  TrendingUp,
   Wifi,
   WifiOff,
-  Play,
-  Pause,
-  Settings,
-  RefreshCw,
-  Bell,
-  BarChart3,
+  Zap,
 } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from "recharts"
 
 // 实时数据处理引擎
+interface ProcessingMetrics {
+  totalProcessed: number
+  processingRate: number
+  errorRate: number
+  latency: number
+}
+
+interface AlertCondition {
+  threshold: number
+  type: "high" | "low"
+  message: string
+}
+
+interface AlertInfo {
+  id: string
+  streamId: string
+  message: string
+  value: number
+  threshold: number
+  timestamp: number
+  severity: string
+}
+
+interface StreamDataPoint {
+  streamId: string
+  value: number
+  timestamp: number
+  transformations?: Array<{ type: string;[key: string]: unknown }>
+}
+
 class RealTimeDataProcessorEngine {
-  constructor() {
-    this.subscribers = new Map()
-    this.dataStreams = new Map()
-    this.processingQueue = []
-    this.isProcessing = false
-    this.metrics = {
-      totalProcessed: 0,
-      processingRate: 0,
-      errorRate: 0,
-      latency: 0,
-    }
+  private subscribers: Map<string, Set<(data: StreamDataPoint) => void>> = new Map()
+  private dataStreams: Map<string, unknown> = new Map()
+  private processingQueue: StreamDataPoint[] = []
+  private isProcessing = false
+  private metrics: ProcessingMetrics = {
+    totalProcessed: 0,
+    processingRate: 0,
+    errorRate: 0,
+    latency: 0,
   }
 
   // 订阅数据流
-  subscribe(streamId, callback) {
+  subscribe(streamId: string, callback: (data: StreamDataPoint) => void): () => void {
     if (!this.subscribers.has(streamId)) {
       this.subscribers.set(streamId, new Set())
     }
-    this.subscribers.get(streamId).add(callback)
+    this.subscribers.get(streamId)!.add(callback)
 
     return () => {
       const callbacks = this.subscribers.get(streamId)
@@ -73,7 +100,7 @@ class RealTimeDataProcessorEngine {
   }
 
   // 发布数据
-  publish(streamId, data) {
+  publish(streamId: string, data: StreamDataPoint): void {
     const callbacks = this.subscribers.get(streamId)
     if (callbacks) {
       callbacks.forEach((callback) => {
@@ -87,11 +114,10 @@ class RealTimeDataProcessorEngine {
   }
 
   // 添加数据到处理队列
-  addToQueue(data) {
+  addToQueue(data: StreamDataPoint): void {
     this.processingQueue.push({
       ...data,
       timestamp: Date.now(),
-      id: `data_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     })
 
     if (!this.isProcessing) {
@@ -100,7 +126,7 @@ class RealTimeDataProcessorEngine {
   }
 
   // 处理队列中的数据
-  async processQueue() {
+  async processQueue(): Promise<void> {
     if (this.processingQueue.length === 0) {
       this.isProcessing = false
       return
@@ -111,6 +137,7 @@ class RealTimeDataProcessorEngine {
 
     while (this.processingQueue.length > 0) {
       const data = this.processingQueue.shift()
+      if (!data) continue
 
       try {
         const processedData = await this.processData(data)
@@ -130,7 +157,7 @@ class RealTimeDataProcessorEngine {
   }
 
   // 数据处理逻辑
-  async processData(data) {
+  async processData(data: StreamDataPoint): Promise<StreamDataPoint & { processed: boolean; processedAt: number }> {
     // 模拟数据处理延迟
     await new Promise((resolve) => setTimeout(resolve, Math.random() * 10))
 
@@ -145,17 +172,17 @@ class RealTimeDataProcessorEngine {
   }
 
   // 应用数据转换
-  applyTransformations(value, transformations) {
-    return transformations.reduce((acc, transform) => {
+  applyTransformations(value: number, transformations: Array<{ type: string;[key: string]: unknown }>): number {
+    return transformations.reduce((acc: number, transform: { type: string;[key: string]: unknown }) => {
       switch (transform.type) {
         case "multiply":
-          return acc * transform.factor
+          return acc * (transform.factor as number)
         case "add":
-          return acc + transform.value
+          return acc + (transform.value as number)
         case "round":
-          return Math.round(acc * Math.pow(10, transform.decimals)) / Math.pow(10, transform.decimals)
+          return Math.round(acc * Math.pow(10, transform.decimals as number)) / Math.pow(10, transform.decimals as number)
         case "filter":
-          return transform.condition(acc) ? acc : null
+          return (transform.condition as (v: number) => boolean)(acc) ? acc : 0
         default:
           return acc
       }
@@ -163,12 +190,22 @@ class RealTimeDataProcessorEngine {
   }
 
   // 获取处理指标
-  getMetrics() {
+  getMetrics(): ProcessingMetrics {
     return { ...this.metrics }
   }
 
+  // 获取队列长度
+  getQueueLength(): number {
+    return this.processingQueue.length
+  }
+
+  // 获取处理状态
+  getIsProcessing(): boolean {
+    return this.isProcessing
+  }
+
   // 重置指标
-  resetMetrics() {
+  resetMetrics(): void {
     this.metrics = {
       totalProcessed: 0,
       processingRate: 0,
@@ -179,23 +216,36 @@ class RealTimeDataProcessorEngine {
 }
 
 // 数据流生成器
+interface StreamConfig {
+  type: string
+  initialValue?: number
+  interval?: number
+  transformations?: Array<{ type: string;[key: string]: unknown }>
+  [key: string]: unknown
+}
+
+interface StreamState {
+  isActive: boolean
+  lastValue: number
+  [key: string]: unknown
+}
+
 class DataStreamGenerator {
-  constructor() {
-    this.streams = new Map()
-    this.intervals = new Map()
-  }
+  private streams: Map<string, StreamState> = new Map()
+  private intervals: Map<string, ReturnType<typeof setInterval>> = new Map()
 
   // 创建数据流
-  createStream(streamId, config) {
-    this.streams.set(streamId, {
+  createStream(streamId: string, config: StreamConfig): void {
+    const stream = {
       ...config,
       isActive: false,
-      lastValue: config.initialValue || 0,
-    })
+      lastValue: (config.initialValue as number) || 0,
+    }
+    this.streams.set(streamId, stream as unknown as StreamState)
   }
 
   // 启动数据流
-  startStream(streamId, processor) {
+  startStream(streamId: string, processor: RealTimeDataProcessorEngine): void {
     const stream = this.streams.get(streamId)
     if (!stream || stream.isActive) return
 
@@ -215,15 +265,15 @@ class DataStreamGenerator {
         streamId,
         value: newValue,
         timestamp: Date.now(),
-        transformations: stream.transformations,
+        transformations: stream.transformations as Array<{ type: string;[key: string]: unknown }> | undefined,
       })
-    }, stream.interval || 1000)
+    }, (stream.interval as number) || 1000)
 
     this.intervals.set(streamId, interval)
   }
 
   // 停止数据流
-  stopStream(streamId) {
+  stopStream(streamId: string): void {
     const stream = this.streams.get(streamId)
     if (stream) {
       stream.isActive = false
@@ -238,28 +288,28 @@ class DataStreamGenerator {
   }
 
   // 生成数据值
-  generateValue(stream) {
+  private generateValue(stream: StreamState): number {
     switch (stream.type) {
       case "random":
-        return Math.random() * (stream.max - stream.min) + stream.min
+        return Math.random() * ((stream.max as number) - (stream.min as number)) + (stream.min as number)
       case "sine":
-        return Math.sin(Date.now() / stream.period) * stream.amplitude + stream.offset
+        return Math.sin(Date.now() / (stream.period as number)) * (stream.amplitude as number) + (stream.offset as number)
       case "trend":
-        return stream.lastValue + (Math.random() - 0.5) * stream.volatility + stream.trend
+        return stream.lastValue + (Math.random() - 0.5) * (stream.volatility as number) + (stream.trend as number)
       case "step":
-        return Math.floor(Math.random() * stream.steps) * stream.stepSize + stream.min
+        return Math.floor(Math.random() * (stream.steps as number)) * (stream.stepSize as number) + (stream.min as number)
       default:
         return Math.random() * 100
     }
   }
 
   // 获取流状态
-  getStreamStatus(streamId) {
+  getStreamStatus(streamId: string): StreamState | undefined {
     return this.streams.get(streamId)
   }
 
   // 获取所有流
-  getAllStreams() {
+  getAllStreams(): Array<{ id: string } & Record<string, unknown>> {
     return Array.from(this.streams.entries()).map(([id, stream]) => ({
       id,
       ...stream,
@@ -268,8 +318,18 @@ class DataStreamGenerator {
 }
 
 // 实时数据可视化组件
-function RealTimeChart({ data, type = "line", title, color = "#3b82f6" }) {
-  const chartData = data.slice(-50) // 只显示最近50个数据点
+function RealTimeChart({
+  data,
+  type = "line",
+  title,
+  color = "#3b82f6",
+}: {
+  data: Array<{ timestamp: number; value: number }>
+  type?: string
+  title: string
+  color?: string
+}) {
+  const chartData = data.slice(-50) as Array<{ timestamp: number; value: number | string }>
 
   const renderChart = () => {
     switch (type) {
@@ -277,11 +337,11 @@ function RealTimeChart({ data, type = "line", title, color = "#3b82f6" }) {
         return (
           <AreaChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" tickFormatter={(value) => new Date(value).toLocaleTimeString()} />
+            <XAxis dataKey="timestamp" tickFormatter={(value: number) => new Date(value).toLocaleTimeString()} />
             <YAxis />
             <Tooltip
-              labelFormatter={(value) => new Date(value).toLocaleString()}
-              formatter={(value) => [value.toFixed(2), title]}
+              labelFormatter={(value: number) => new Date(value).toLocaleString()}
+              formatter={(value: number) => [Number(value).toFixed(2), title]}
             />
             <Area type="monotone" dataKey="value" stroke={color} fill={color} fillOpacity={0.3} />
           </AreaChart>
@@ -290,11 +350,11 @@ function RealTimeChart({ data, type = "line", title, color = "#3b82f6" }) {
         return (
           <BarChart data={chartData.slice(-10)}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" tickFormatter={(value) => new Date(value).toLocaleTimeString()} />
+            <XAxis dataKey="timestamp" tickFormatter={(value: number) => new Date(value).toLocaleTimeString()} />
             <YAxis />
             <Tooltip
-              labelFormatter={(value) => new Date(value).toLocaleString()}
-              formatter={(value) => [value.toFixed(2), title]}
+              labelFormatter={(value: number) => new Date(value).toLocaleString()}
+              formatter={(value: number) => [Number(value).toFixed(2), title]}
             />
             <Bar dataKey="value" fill={color} />
           </BarChart>
@@ -303,24 +363,13 @@ function RealTimeChart({ data, type = "line", title, color = "#3b82f6" }) {
         return (
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" tickFormatter={(value) => new Date(value).toLocaleTimeString()} />
+            <XAxis dataKey="timestamp" tickFormatter={(value: number) => new Date(value).toLocaleTimeString()} />
             <YAxis />
             <Tooltip
-              labelFormatter={(value) => new Date(value).toLocaleString()}
-              formatter={(value) => [value.toFixed(2), title]}
+              labelFormatter={(value: number) => new Date(value).toLocaleString()}
+              formatter={(value: number) => [Number(value).toFixed(2), title]}
             />
             <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-            {/* 添加趋势线 */}
-            {chartData.length > 1 && (
-              <ReferenceLine
-                segment={[
-                  { x: chartData[0]?.timestamp, y: chartData[0]?.value },
-                  { x: chartData[chartData.length - 1]?.timestamp, y: chartData[chartData.length - 1]?.value },
-                ]}
-                stroke="#ef4444"
-                strokeDasharray="5 5"
-              />
-            )}
           </LineChart>
         )
     }
@@ -345,7 +394,7 @@ function RealTimeChart({ data, type = "line", title, color = "#3b82f6" }) {
         <div className="mt-2 flex items-center justify-between text-sm">
           <span className="text-gray-600">当前值:</span>
           <span className="font-mono font-bold" style={{ color }}>
-            {data[data.length - 1]?.value?.toFixed(2) || "0.00"}
+            {data.length > 0 ? Number(data[data.length - 1]?.value).toFixed(2) : "0.00"}
           </span>
         </div>
       </CardContent>
@@ -358,10 +407,10 @@ export function RealTimeDataProcessor() {
   const [processor] = useState(() => new RealTimeDataProcessorEngine())
   const [generator] = useState(() => new DataStreamGenerator())
   const [isConnected, setIsConnected] = useState(true)
-  const [activeStreams, setActiveStreams] = useState(new Set())
-  const [streamData, setStreamData] = useState(new Map())
+  const [activeStreams, setActiveStreams] = useState<Set<string>>(new Set())
+  const [streamData, setStreamData] = useState<Map<string, Array<{ timestamp: number; value: number }>>>(new Map())
   const [metrics, setMetrics] = useState(processor.getMetrics())
-  const [alerts, setAlerts] = useState([])
+  const [alerts, setAlerts] = useState<AlertInfo[]>([])
   const [selectedTimeRange, setSelectedTimeRange] = useState("1m")
 
   // 初始化数据流
@@ -403,13 +452,14 @@ export function RealTimeDataProcessor() {
     })
 
     // 订阅数据流
-    const unsubscribers = []
-    ;["sales", "users", "performance", "errors"].forEach((streamId) => {
+    const unsubscribers: Array<() => void> = []
+    const streamIds: string[] = ["sales", "users", "performance", "errors"]
+    streamIds.forEach((streamId) => {
       const unsubscribe = processor.subscribe(streamId, (data) => {
         setStreamData((prev) => {
           const newMap = new Map(prev)
           const currentData = newMap.get(streamId) || []
-          const updatedData = [...currentData, data].slice(-100) // 保留最近100个数据点
+          const updatedData = [...currentData, { timestamp: data.timestamp, value: data.value }].slice(-100)
           newMap.set(streamId, updatedData)
           return newMap
         })
@@ -422,7 +472,7 @@ export function RealTimeDataProcessor() {
 
     return () => {
       unsubscribers.forEach((unsubscribe) => unsubscribe())
-      activeStreams.forEach((streamId) => generator.stopStream(streamId))
+      streamIds.forEach((streamId) => generator.stopStream(streamId))
     }
   }, [])
 
@@ -436,8 +486,8 @@ export function RealTimeDataProcessor() {
   }, [processor])
 
   // 检查告警
-  const checkAlerts = useCallback((streamId, data) => {
-    const alertConditions = {
+  const checkAlerts = useCallback((streamId: string, data: StreamDataPoint) => {
+    const alertConditions: Record<string, AlertCondition> = {
       sales: { threshold: 1200, type: "high", message: "销售额异常高" },
       users: { threshold: 80, type: "low", message: "用户活跃度低" },
       performance: { threshold: 75, type: "low", message: "系统性能下降" },
@@ -450,7 +500,7 @@ export function RealTimeDataProcessor() {
     const shouldAlert = condition.type === "high" ? data.value > condition.threshold : data.value < condition.threshold
 
     if (shouldAlert) {
-      const alert = {
+      const alert: AlertInfo = {
         id: `alert_${Date.now()}`,
         streamId,
         message: condition.message,
@@ -460,12 +510,12 @@ export function RealTimeDataProcessor() {
         severity: data.value > condition.threshold * 1.5 || data.value < condition.threshold * 0.5 ? "high" : "medium",
       }
 
-      setAlerts((prev) => [alert, ...prev.slice(0, 9)]) // 保留最近10个告警
+      setAlerts((prev) => [alert, ...prev.slice(0, 9)])
     }
   }, [])
 
   // 启动/停止数据流
-  const toggleStream = (streamId) => {
+  const toggleStream = (streamId: string) => {
     if (activeStreams.has(streamId)) {
       generator.stopStream(streamId)
       setActiveStreams((prev) => {
@@ -480,7 +530,7 @@ export function RealTimeDataProcessor() {
   }
 
   // 清除告警
-  const clearAlert = (alertId) => {
+  const clearAlert = (alertId: string) => {
     setAlerts((prev) => prev.filter((alert) => alert.id !== alertId))
   }
 
@@ -629,14 +679,15 @@ export function RealTimeDataProcessor() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {["sales", "users", "performance", "errors"].map((streamId) => {
+            {["sales", "users", "performance", "errors"].map((streamId: string) => {
               const isActive = activeStreams.has(streamId)
-              const streamInfo = {
+              const streamInfoMap: Record<string, { name: string; icon: React.ElementType; color: string }> = {
                 sales: { name: "销售数据", icon: TrendingUp, color: "text-blue-600" },
                 users: { name: "用户活跃", icon: Activity, color: "text-green-600" },
                 performance: { name: "系统性能", icon: BarChart3, color: "text-purple-600" },
                 errors: { name: "错误监控", icon: AlertTriangle, color: "text-red-600" },
-              }[streamId]
+              }
+              const streamInfo = streamInfoMap[streamId]
 
               return (
                 <Card
@@ -693,13 +744,13 @@ export function RealTimeDataProcessor() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">队列长度:</span>
-              <Badge variant="outline">{processor.processingQueue.length}</Badge>
+              <Badge variant="outline">{processor.getQueueLength()}</Badge>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">处理状态:</span>
-              <Badge className={processor.isProcessing ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
-                {processor.isProcessing ? (
+              <Badge className={processor.getIsProcessing() ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+                {processor.getIsProcessing() ? (
                   <>
                     <Activity className="w-3 h-3 mr-1 animate-pulse" />
                     处理中
@@ -718,7 +769,7 @@ export function RealTimeDataProcessor() {
                 <span className="text-sm text-gray-600">处理进度:</span>
                 <span className="text-sm text-gray-600">{metrics.totalProcessed > 0 ? "100%" : "0%"}</span>
               </div>
-              <Progress value={processor.isProcessing ? 75 : 100} className="h-2" />
+              <Progress value={processor.getIsProcessing() ? 75 : 100} className="h-2" />
             </div>
           </div>
         </CardContent>

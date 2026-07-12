@@ -2,9 +2,9 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import {
   Dialog,
   DialogContent,
@@ -13,21 +13,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import {
-  Keyboard,
-  Search,
-  Users,
-  CheckSquare,
+  BarChart3,
   Calendar,
+  CheckSquare,
+  FileText,
+  Home,
+  Keyboard,
   Mail,
   Phone,
-  FileText,
+  Search,
   Settings,
-  Home,
-  BarChart3,
+  Users,
   Zap,
 } from "lucide-react"
+import { useEffect, useState } from "react"
 
 interface Shortcut {
   id: string
@@ -59,9 +59,9 @@ export function GlobalShortcuts({ onNavigate, onAction }: GlobalShortcutsProps) 
     },
     {
       id: "nav-customers",
-      key: "Ctrl+2", 
+      key: "Ctrl+2",
       description: "打开客户管理",
-      action: () => onNavigate?("/customers"),
+      action: () => onNavigate?.("/customers"),
       category: "导航",
       icon: <Users className="w-4 h-4" />
     },
@@ -69,7 +69,7 @@ export function GlobalShortcuts({ onNavigate, onAction }: GlobalShortcutsProps) 
       id: "nav-tasks",
       key: "Ctrl+3",
       description: "打开任务管理",
-      action: () => onNavigate?("/tasks"),
+      action: () => onNavigate?.("/tasks"),
       category: "导航",
       icon: <CheckSquare className="w-4 h-4" />
     },
@@ -77,11 +77,11 @@ export function GlobalShortcuts({ onNavigate, onAction }: GlobalShortcutsProps) 
       id: "nav-analytics",
       key: "Ctrl+4",
       description: "打开数据分析",
-      action: () => onNavigate?("/analytics"),
+      action: () => onNavigate?.("/analytics"),
       category: "导航",
       icon: <BarChart3 className="w-4 h-4" />
     },
-    
+
     // 功能快捷键
     {
       id: "global-search",
@@ -139,7 +139,7 @@ export function GlobalShortcuts({ onNavigate, onAction }: GlobalShortcutsProps) 
       category: "功能",
       icon: <FileText className="w-4 h-4" />
     },
-    
+
     // 系统快捷键
     {
       id: "show-shortcuts",
@@ -153,7 +153,7 @@ export function GlobalShortcuts({ onNavigate, onAction }: GlobalShortcutsProps) 
       id: "settings",
       key: "Ctrl+,",
       description: "打开设置",
-      action: () => onNavigate?("/settings"),
+      action: () => onNavigate?.("/settings"),
       category: "系统",
       icon: <Settings className="w-4 h-4" />
     }
@@ -200,9 +200,9 @@ export function GlobalShortcuts({ onNavigate, onAction }: GlobalShortcutsProps) 
             </div>
             <CommandList className="max-h-96">
               <CommandEmpty>未找到相关功能</CommandEmpty>
-              {Object.entries(groupedShortcuts).map(([category, shortcuts]) => (
+              {Object.entries(groupedShortcuts()).map(([category, shortcuts]) => (
                 <CommandGroup key={category} heading={category}>
-                  {shortcuts.map((shortcut) => (
+                  {shortcuts.map((shortcut: Shortcut) => (
                     <CommandItem
                       key={shortcut.id}
                       onSelect={() => {
@@ -239,7 +239,7 @@ export function GlobalShortcuts({ onNavigate, onAction }: GlobalShortcutsProps) 
           </DialogHeader>
 
           <div className="space-y-6">
-            {Object.entries(groupedShortcuts).map(([category, shortcuts]) => (
+            {Object.entries(groupedShortcuts()).map(([category, shortcuts]) => (
               <div key={category}>
                 <h3 className="font-semibold text-slate-800 mb-3 flex items-center space-x-2">
                   {category === "导航" && <Home className="w-4 h-4" />}
@@ -248,7 +248,7 @@ export function GlobalShortcuts({ onNavigate, onAction }: GlobalShortcutsProps) 
                   <span>{category}</span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {shortcuts.map((shortcut) => (
+                  {shortcuts.map((shortcut: Shortcut) => (
                     <div
                       key={shortcut.id}
                       className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"

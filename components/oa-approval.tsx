@@ -1,14 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -18,30 +13,35 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import {
-  FileText,
-  Clock,
-  CheckCircle,
-  XCircle,
   AlertCircle,
-  User,
+  ArrowRight,
   Calendar,
-  Send,
-  Eye,
+  CheckCircle,
+  Clock,
+  Download,
   Edit,
+  Eye,
+  FileText,
+  History,
+  MessageCircle,
   Plus,
   Search,
-  Download,
-  Upload,
-  ArrowRight,
-  MessageCircle,
-  History,
-  Workflow,
+  Send,
   Settings,
+  Upload,
+  User,
+  Workflow,
+  XCircle,
 } from "lucide-react"
+import { useEffect, useState } from "react"
 
 // 审批状态枚举
 const ApprovalStatus = {
@@ -94,9 +94,21 @@ const ApprovalTypes = {
 }
 
 // 工作流引擎类
+interface WorkflowStep {
+  step: number
+  name: string
+  user: string
+  status: string
+  time: string | null
+  reason: string | null | undefined
+  approver?: string
+}
+
+type ApprovalTypeKey = keyof typeof ApprovalTypes
+
 class WorkflowEngine {
-  static createWorkflow(type, amount = 0) {
-    const typeConfig = ApprovalTypes[type]
+  static createWorkflow(type: ApprovalTypeKey | string, amount = 0): WorkflowStep[] {
+    const typeConfig = ApprovalTypes[type as ApprovalTypeKey]
     if (!typeConfig) return []
 
     const workflow = [...typeConfig.workflow]
@@ -119,8 +131,8 @@ class WorkflowEngine {
     }))
   }
 
-  static getApproverByRole(role) {
-    const approvers = {
+  static getApproverByRole(role: string): string {
+    const approvers: Record<string, string> = {
       直属主管: "李经理",
       部门主管: "陈主管",
       部门总监: "王总监",
@@ -134,16 +146,22 @@ class WorkflowEngine {
     return approvers[role] || role
   }
 
-  static getNextStep(workflow, currentStep) {
+  static getNextStep(workflow: WorkflowStep[], currentStep: number): WorkflowStep | undefined {
     return workflow.find((step) => step.step === currentStep + 1)
   }
 
-  static canApprove(workflow, currentStep, userId) {
+  static canApprove(workflow: WorkflowStep[], currentStep: number, _userId: string): boolean {
     const step = workflow.find((s) => s.step === currentStep)
-    return step && step.status === "pending"
+    return step !== undefined && step.status === "pending"
   }
 
-  static processApproval(workflow, currentStep, action, reason = "", userId = "current_user") {
+  static processApproval(
+    workflow: WorkflowStep[],
+    currentStep: number,
+    action: string,
+    reason = "",
+    userId = "current_user",
+  ): WorkflowStep[] {
     const updatedWorkflow = [...workflow]
     const stepIndex = currentStep - 1
 
@@ -168,12 +186,12 @@ class WorkflowEngine {
     return updatedWorkflow
   }
 
-  static calculateProgress(workflow) {
+  static calculateProgress(workflow: WorkflowStep[]): number {
     const completedSteps = workflow.filter((step) => step.status === "approved" || step.status === "rejected").length
     return Math.round((completedSteps / workflow.length) * 100)
   }
 
-  static getFinalStatus(workflow) {
+  static getFinalStatus(workflow: WorkflowStep[]): string {
     const hasRejected = workflow.some((step) => step.status === "rejected")
     if (hasRejected) return "rejected"
 
@@ -282,17 +300,34 @@ const mockApprovals = [
   },
 ]
 
+// 审批类型
+interface ApprovalItem {
+  id: string
+  title: string
+  type: string
+  applicant: { name: string; avatar: string; department: string; id: string }
+  status: string
+  priority: string
+  createTime: string
+  amount: number | null
+  description: string
+  attachments: string[]
+  currentStep: number
+  totalSteps: number
+  workflow: WorkflowStep[]
+}
+
 export function OAApproval() {
-  const [approvals, setApprovals] = useState(mockApprovals)
-  const [selectedApproval, setSelectedApproval] = useState(null)
+  const [approvals, setApprovals] = useState<ApprovalItem[]>(mockApprovals as ApprovalItem[])
+  const [selectedApproval, setSelectedApproval] = useState<ApprovalItem | null>(null)
   const [activeTab, setActiveTab] = useState("pending")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterType, setFilterType] = useState("all")
   const [isWorkflowDialogOpen, setIsWorkflowDialogOpen] = useState(false)
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false)
-  const [signatureRecords, setSignatureRecords] = useState([])
-  const [currentSigningApproval, setCurrentSigningApproval] = useState(null)
+  const [signatureRecords, setSignatureRecords] = useState<WorkflowStep[]>([])
+  const [currentSigningApproval, setCurrentSigningApproval] = useState<ApprovalItem | null>(null)
   const [isMobileView, setIsMobileView] = useState(false)
 
   useEffect(() => {
@@ -327,9 +362,9 @@ export function OAApproval() {
   })
 
   // 处理审批操作
-  const handleApprovalAction = (approvalId, action, reason = "") => {
+  const handleApprovalAction = (approvalId: string, action: string, reason = "") => {
     setApprovals((prev) =>
-      prev.map((approval) => {
+      prev.map((approval: ApprovalItem) => {
         if (approval.id === approvalId) {
           const updatedWorkflow = WorkflowEngine.processApproval(
             approval.workflow,
@@ -355,9 +390,9 @@ export function OAApproval() {
   }
 
   // 撤回申请
-  const handleRevoke = (approvalId) => {
+  const handleRevoke = (approvalId: string) => {
     setApprovals((prev) =>
-      prev.map((approval) => {
+      prev.map((approval: ApprovalItem) => {
         if (approval.id === approvalId && approval.status === "pending") {
           return {
             ...approval,
@@ -560,8 +595,18 @@ export function OAApproval() {
 }
 
 // 审批卡片组件
-function ApprovalCard({ approval, onAction, onView, onRevoke }) {
-  const ApprovalTypeConfig = ApprovalTypes[approval.type]
+function ApprovalCard({
+  approval,
+  onAction,
+  onView,
+  onRevoke,
+}: {
+  approval: ApprovalItem
+  onAction: (approvalId: string, action: string, reason?: string) => void
+  onView: (approval: ApprovalItem) => void
+  onRevoke: (approvalId: string) => void
+}) {
+  const ApprovalTypeConfig = ApprovalTypes[approval.type as ApprovalTypeKey]
   const TypeIcon = ApprovalTypeConfig.icon
   const progress = WorkflowEngine.calculateProgress(approval.workflow)
 
@@ -698,10 +743,20 @@ function ApprovalCard({ approval, onAction, onView, onRevoke }) {
 }
 
 // 审批详情弹窗组件
-function ApprovalDetailDialog({ approval, onClose, onAction, onRevoke }) {
+function ApprovalDetailDialog({
+  approval,
+  onClose,
+  onAction,
+  onRevoke,
+}: {
+  approval: ApprovalItem
+  onClose?: () => void
+  onAction: (approvalId: string, action: string, reason?: string) => void
+  onRevoke: (approvalId: string) => void
+}) {
   const [comment, setComment] = useState("")
   const [activeDetailTab, setActiveDetailTab] = useState("info")
-  const ApprovalTypeConfig = ApprovalTypes[approval.type]
+  const ApprovalTypeConfig = ApprovalTypes[approval.type as ApprovalTypeKey]
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -799,15 +854,14 @@ function ApprovalDetailDialog({ approval, onClose, onAction, onRevoke }) {
                   <div key={step.step} className="flex items-start space-x-4">
                     <div className="flex flex-col items-center">
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                          step.status === "approved"
-                            ? "bg-green-100 text-green-600 border-green-300"
-                            : step.status === "rejected"
-                              ? "bg-red-100 text-red-600 border-red-300"
-                              : step.status === "pending"
-                                ? "bg-yellow-100 text-yellow-600 border-yellow-300 animate-pulse"
-                                : "bg-gray-100 text-gray-400 border-gray-300"
-                        }`}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${step.status === "approved"
+                          ? "bg-green-100 text-green-600 border-green-300"
+                          : step.status === "rejected"
+                            ? "bg-red-100 text-red-600 border-red-300"
+                            : step.status === "pending"
+                              ? "bg-yellow-100 text-yellow-600 border-yellow-300 animate-pulse"
+                              : "bg-gray-100 text-gray-400 border-gray-300"
+                          }`}
                       >
                         {step.status === "approved" ? (
                           <CheckCircle className="w-5 h-5" />
@@ -835,15 +889,14 @@ function ApprovalDetailDialog({ approval, onClose, onAction, onRevoke }) {
                         <div className="text-right">
                           {step.time && <p className="text-sm text-gray-600">{step.time}</p>}
                           <Badge
-                            className={`${
-                              step.status === "approved"
-                                ? "bg-green-100 text-green-800"
-                                : step.status === "rejected"
-                                  ? "bg-red-100 text-red-800"
-                                  : step.status === "pending"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : "bg-gray-100 text-gray-800"
-                            }`}
+                            className={`${step.status === "approved"
+                              ? "bg-green-100 text-green-800"
+                              : step.status === "rejected"
+                                ? "bg-red-100 text-red-800"
+                                : step.status === "pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
                           >
                             {step.status === "approved"
                               ? "已通过"
@@ -932,7 +985,7 @@ function ApprovalDetailDialog({ approval, onClose, onAction, onRevoke }) {
                 className="text-orange-600 border-orange-200 hover:bg-orange-50"
                 onClick={() => {
                   onRevoke(approval.id)
-                  onClose()
+                  onClose?.()
                 }}
               >
                 撤回申请
@@ -941,7 +994,7 @@ function ApprovalDetailDialog({ approval, onClose, onAction, onRevoke }) {
           </div>
 
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={() => onClose?.()}>
               关闭
             </Button>
             {approval.status === "pending" && (
@@ -951,7 +1004,7 @@ function ApprovalDetailDialog({ approval, onClose, onAction, onRevoke }) {
                   className="text-red-600 border-red-200 hover:bg-red-50"
                   onClick={() => {
                     onAction(approval.id, "rejected", comment || "审批不通过")
-                    onClose()
+                    onClose?.()
                   }}
                 >
                   <XCircle className="w-4 h-4 mr-2" />
@@ -961,7 +1014,7 @@ function ApprovalDetailDialog({ approval, onClose, onAction, onRevoke }) {
                   className="bg-green-600 hover:bg-green-700"
                   onClick={() => {
                     onAction(approval.id, "approved", comment || "审批通过")
-                    onClose()
+                    onClose?.()
                   }}
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
@@ -977,8 +1030,21 @@ function ApprovalDetailDialog({ approval, onClose, onAction, onRevoke }) {
 }
 
 // 创建申请表单组件
-function CreateApprovalForm({ onClose, onSubmit }) {
-  const [formData, setFormData] = useState({
+function CreateApprovalForm({
+  onClose,
+  onSubmit,
+}: {
+  onClose?: () => void
+  onSubmit: (approval: ApprovalItem) => void
+}) {
+  const [formData, setFormData] = useState<{
+    type: string
+    title: string
+    description: string
+    amount: string
+    priority: string
+    attachments: string[]
+  }>({
     type: "",
     title: "",
     description: "",
@@ -987,11 +1053,11 @@ function CreateApprovalForm({ onClose, onSubmit }) {
     attachments: [],
   })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
     // 创建新的审批申请
-    const newApproval = {
+    const newApproval: ApprovalItem = {
       id: `APP${Date.now().toString().slice(-3)}`,
       title: formData.title,
       type: formData.type,
@@ -1008,7 +1074,7 @@ function CreateApprovalForm({ onClose, onSubmit }) {
     }
 
     // 使用工作流引擎创建工作流
-    const workflow = WorkflowEngine.createWorkflow(formData.type, newApproval.amount)
+    const workflow = WorkflowEngine.createWorkflow(formData.type, newApproval.amount ?? 0)
     newApproval.workflow = workflow
     newApproval.totalSteps = workflow.length
 
@@ -1096,10 +1162,10 @@ function CreateApprovalForm({ onClose, onSubmit }) {
           <Label className="text-sm font-medium text-gray-700 mb-2 block">预览审批流程</Label>
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center space-x-2">
-              {ApprovalTypes[formData.type].workflow.map((step, index) => (
+              {ApprovalTypes[formData.type as ApprovalTypeKey]?.workflow.map((step, index) => (
                 <div key={index} className="flex items-center">
                   <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">{step}</div>
-                  {index < ApprovalTypes[formData.type].workflow.length - 1 && (
+                  {index < (ApprovalTypes[formData.type as ApprovalTypeKey]?.workflow.length ?? 0) - 1 && (
                     <ArrowRight className="w-4 h-4 text-gray-400 mx-1" />
                   )}
                 </div>
@@ -1123,7 +1189,7 @@ function CreateApprovalForm({ onClose, onSubmit }) {
 }
 
 // 工作流设置弹窗
-function WorkflowSettingsDialog({ onClose }) {
+function WorkflowSettingsDialog({ onClose }: { onClose?: () => void }) {
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
@@ -1174,7 +1240,7 @@ function WorkflowSettingsDialog({ onClose }) {
 }
 
 // 辅助函数
-function getStatusColor(status) {
+function getStatusColor(status: string) {
   switch (status) {
     case "pending":
       return "bg-yellow-100 text-yellow-800 border-yellow-200"
@@ -1191,7 +1257,7 @@ function getStatusColor(status) {
   }
 }
 
-function getStatusIcon(status) {
+function getStatusIcon(status: string) {
   switch (status) {
     case "pending":
       return <Clock className="w-4 h-4" />

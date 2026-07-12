@@ -36,11 +36,12 @@ export function VirtualScroll<T>({
         <List
           ref={listRef}
           height={containerHeight}
+          width="100%"
           itemCount={items.length}
           itemSize={itemHeight}
           overscanCount={overscan}
           className={className}
-          onScroll={({ scrollTop }) => onScroll?.(scrollTop)}
+          onScroll={({ scrollOffset }) => onScroll?.(scrollOffset)}
           itemData={items}
         >
           {({ index, style, data }) => renderItem({ index, style, data: data[index] })}
@@ -57,11 +58,12 @@ export function VirtualScroll<T>({
         <VariableSizeList
           ref={listRef}
           height={containerHeight}
+          width="100%"
           itemCount={items.length}
           itemSize={itemHeight}
           overscanCount={overscan}
           className={className}
-          onScroll={({ scrollTop }) => onScroll?.(scrollTop)}
+          onScroll={({ scrollOffset }) => onScroll?.(scrollOffset)}
           itemData={items}
           estimatedItemSize={estimatedItemSize}
         >
